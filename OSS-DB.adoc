@@ -779,5 +779,6 @@ pg_start_backup(バックアップラベル名 [, ファストモード [, 排�
 ・第3引数（排他または非排他を指定）: trueまたはfalseを指定する。trueを指定すると「排他モード」、falseを指定すると「非排他モード」で実行される（デフォルトはtrue）
 
 |PostgreSQL ユーティリティ vs SQLペア一覧
-|test
+|image:osコマンドvsSQL.png[]
+
 
