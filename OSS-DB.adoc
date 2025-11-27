@@ -5,6 +5,44 @@
 |===
 |項目 |内容
 
+|ROLLBACKとROLLBACK TO SAVEPOINT
+|BEGIN; +
+INSERT INTO sample VALUES(1, 'test'); +
+SAVEPOINT s1;  +
+INSERT INTO sample VALUES(2, 'test'); +
+SAVEPOINT s2; +
+INSERT INTO sample VALUES(3, 'test'); +
+SAVEPOINT s3; +
+DELETE FROM sample WHERE no = 2;  +
+SAVEPOINT s4;  +
+ROLLBACK TO s2; +
+DELETE FROM sample WHERE no = 1; +
+COMMIT; +
+これって10行目のROLLBACKでBEGINで開始したトランザクションは終了しますよね
+
+
+いい質問です。結論から言うと、10行目の ROLLBACK TO s2; ではトランザクションは終了しません。
+
+🔍 詳細解説
+BEGIN; トランザクションを開始します。ここから COMMIT または ROLLBACK が出るまで継続します。 +
+SAVEPOINT s2; トランザクション内に「巻き戻し可能なポイント」を設定します。 +
+ROLLBACK TO s2; トランザクション全体を終了するのではなく、トランザクションを継続したまま、状態を「s2 の時点」に戻す操作です。 +
+→ つまり、s2 以降の操作（INSERT(3, 'test') と DELETE no=2）は取り消されますが、トランザクション自体はまだ生きています。 +
+その後の DELETE FROM sample WHERE no = 1; ROLLBACK TO s2; の後もトランザクションは続いているので、この削除は有効です。 +
+最後の COMMIT; ここで初めてトランザクションが終了し、確定します。
+
+✨ 設計美的ポイント +
+青真さんの視点で整理すると： +
+ROLLBACK TO SAVEPOINT は「部分的な巻き戻し」 +
+ROLLBACK は「トランザクション全体の終了」 +
+COMMIT は「トランザクションの確定」 +
+つまり責務分離が明快で、 +
+「全体を終わらせる」か +
+「途中まで戻す」か を明確に選べる設計になっています。
+
+✅ まとめると、10行目の ROLLBACK TO s2; は トランザクションを終了しない、あくまで「s2 の時点に戻す」だけです。終了するのは最後の COMMIT; です。 +
+ROLLBACK TO と ROLLBACKは別の文法となります。
+
 |情報スキーマとは
 |情報スキーマとは、データベースクラスタに関する情報の確認に使用する仕組みです。 +
 データベースオブジェクトに関する定義情報を含むスキーマ(テーブルなどのオブジェクトを格納している名前空間)を指します。 +
@@ -822,6 +860,7 @@ pg_start_backup(バックアップラベル名 [, ファストモード [, 排�
 
 |トランザクション内でエラーが起きた場合
 |トランザクション内でエラーが発生した場合はロールバック以外の処理を受け付けなくなり、トランザクション内の処理は全て取り消されます。
+
 
 
 
