@@ -5,6 +5,64 @@
 |===
 |項目 |内容
 
+|プロシージャの暗黙的トランザクションと、関数ではトランザクション制御文が書けない
+a|1. 関数（CREATE FUNCTION） +
+関数は 呼び出し元のトランザクションに従属するので、トランザクション制御文（BEGIN; COMMIT; ROLLBACK;）は書けません。 +
+
+-- 関数の例 +
+CREATE FUNCTION sample_func() +
+RETURNS void +
+LANGUAGE plpgsql +
+AS $$ +
+BEGIN +
+pass:[&nbsp;&nbsp;&nbsp;&nbsp;]    INSERT INTO tbl01 (c1) VALUES (100); +
+
+pass:[&nbsp;&nbsp;&nbsp;&nbsp;]    -- ❌ NG: 関数内ではトランザクション制御文は使えない +
+pass:[&nbsp;&nbsp;&nbsp;&nbsp;]    -- COMMIT; +
+pass:[&nbsp;&nbsp;&nbsp;&nbsp;]    -- ROLLBACK; +
+END; +
+$$; +
+
+この関数を呼び出すときは、外側で BEGIN/COMMIT を書く必要がある。 +
+つまり「関数はトランザクション責任を持たず、呼び出し元に従う存在」です。 +
+
+2. プロシージャ（CREATE PROCEDURE） +
+プロシージャは 自分の中でトランザクション制御文を書けるのが特徴です。 +
+
+-- プロシージャの例 +
+CREATE PROCEDURE sample_proc() +
+LANGUAGE plpgsql +
+AS \$$ +
+BEGIN +
+pass:[&nbsp;&nbsp;&nbsp;&nbsp;]   FOR i IN 1..5 LOOP +
+pass:[&nbsp;&nbsp;&nbsp;&nbsp;]pass:[&nbsp;&nbsp;&nbsp;&nbsp;]        INSERT INTO tbl01 (c1) VALUES (i); +
+
+pass:[&nbsp;&nbsp;&nbsp;&nbsp;]pass:[&nbsp;&nbsp;&nbsp;&nbsp;]        IF i % 2 = 0 THEN +
+pass:[&nbsp;&nbsp;&nbsp;&nbsp;]pass:[&nbsp;&nbsp;&nbsp;&nbsp;]pass:[&nbsp;&nbsp;&nbsp;&nbsp;]            COMMIT;   -- ✅ OK: プロシージャ内でトランザクションを終了できる +
+pass:[&nbsp;&nbsp;&nbsp;&nbsp;]pass:[&nbsp;&nbsp;&nbsp;&nbsp;]        ELSE +
+pass:[&nbsp;&nbsp;&nbsp;&nbsp;]pass:[&nbsp;&nbsp;&nbsp;&nbsp;]pass:[&nbsp;&nbsp;&nbsp;&nbsp;]            ROLLBACK; -- ✅ OK: プロシージャ内でトランザクションを破棄できる +
+pass:[&nbsp;&nbsp;&nbsp;&nbsp;]pass:[&nbsp;&nbsp;&nbsp;&nbsp;]        END IF; +
+pass:[&nbsp;&nbsp;&nbsp;&nbsp;]    END LOOP; +
+END; +
+$$; +
+
+この場合、プロシージャを呼び出すと 暗黙的にトランザクションが開始され、 +
+ループの中で COMMIT や ROLLBACK をすると、その時点でトランザクションが終了し、 +
+次のループから新しいトランザクションが始まります。 +
+
+
+|トランザクションを開始するBEGINとプロシージャ内のBEGIN
+|1. PL/pgSQL の BEGIN ... END +
+これは コードブロックの開始と終了を示すだけです。 +
+
+例：CREATE PROCEDURE ... AS $$ BEGIN ... END; $$; + 
+→ この BEGIN は「この中がプロシージャ本体ですよ」という意味で、トランザクションとは無関係です。 +
+
+2. SQL の BEGIN +
+これは トランザクションを明示的に開始する宣言です。 +
+
+通常は BEGIN; ... COMMIT; で使い、複数の SQL をひとまとめにして「成功なら全部反映、失敗なら全部取り消し」という単位を作ります。
+
 |同じ物理バックアップでもDBを停止する必要があるものと無いもの
 |1. 単純コピー（例：tar や cp） +
 データディレクトリをそのままコピーする方法 +
@@ -881,6 +939,7 @@ pg_start_backup(バックアップラベル名 [, ファストモード [, 排�
 
 |トランザクション内でエラーが起きた場合
 |トランザクション内でエラーが発生した場合はロールバック以外の処理を受け付けなくなり、トランザクション内の処理は全て取り消されます。
+
 
 
 
