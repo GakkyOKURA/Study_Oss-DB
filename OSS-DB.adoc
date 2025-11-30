@@ -849,7 +849,8 @@ SELECT COUNT(*) FROM sample;   -- 結果: 3 +
 SELECT COUNT(value) FROM sample; -- 結果: 2
 
 |ROLE と USER の違い
-|CREATE USER は CREATE ROLE ... LOGIN の糖衣構文です。違いは「デフォルトでログイン権限が付くかどうか」だけです。
+|CREATE USER は CREATE ROLE ... LOGIN の糖衣構文です。違いは「デフォルトでログイン権限が付くかどうか」だけです。 +
+つまり、 CREATE USER test; は CREATE ROLE test WITH LOGIN; をしている。
 
 🔑 詳細な違い
 CREATE ROLE
@@ -1061,6 +1062,7 @@ pg_start_backup(バックアップラベル名 [, ファストモード [, 排�
 
 |トランザクション内でエラーが起きた場合
 |トランザクション内でエラーが発生した場合はロールバック以外の処理を受け付けなくなり、トランザクション内の処理は全て取り消されます。
+
 
 
 
