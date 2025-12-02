@@ -5,6 +5,13 @@
 |===
 |項目 |内容
 
+|postgresql.conf 注意パラメータ４つ
+|listen_address +
+port +
+max_connections +
+logging_collector +
+上記４つはpostgreSQLの再起動でしか反映されないので注意。 postgresql.confの再読み込みでは反映されない。
+
 |IF と CASE
 |PostgreSQLでは純粋なSQLでは"IF"は使えない。 "IF"は使えるのは関数やプロシージャ内のみ。 +
 関数やプロシージャ内では、"IF"と"CASE"はどっちも使える。 +
@@ -1096,6 +1103,7 @@ pg_start_backup(バックアップラベル名 [, ファストモード [, 排�
 
 |トランザクション内でエラーが起きた場合
 |トランザクション内でエラーが発生した場合はロールバック以外の処理を受け付けなくなり、トランザクション内の処理は全て取り消されます。
+
 
 
 
