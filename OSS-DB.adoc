@@ -5,6 +5,17 @@
 |===
 |項目 |内容
 
+|GRANT REVOKE 書式
+|GRANT 権限 ON テーブル名 TO {ユーザ名 \| PUBLIC}; +
+GRANT 権限 ON DATABASE データベース名 TO {ユーザ名 \| PUBLIC}; +
+GRANT 権限 ON SCHEMA スキーマ名 TO {ユーザ名 \| PUBLIC}; +
+
+REVOKE 権限 ON テーブル名 FROM {ユーザ名 \| PUBLIC}; +
+REVOKE 権限 ON DATABASE データベース名 FROM {ユーザ名 \| PUBLIC}; +
+REVOKE 権限 ON SCHEMA スキーマ名 FROM {ユーザ名 \| PUBLIC}; +
+
+どちらも"ON"があるので注意
+
 |createdb のオプションで一つだけ小文字のやつがいる
 |createdb では"O"や"E"などでオプションの指定が可能だが、ロケールの設定だけ"L"ではなく"l"で、小文字なので注意。 +
 どうやら歴史的な背景があるらしい。
@@ -1107,6 +1118,7 @@ pg_start_backup(バックアップラベル名 [, ファストモード [, 排�
 
 |トランザクション内でエラーが起きた場合
 |トランザクション内でエラーが発生した場合はロールバック以外の処理を受け付けなくなり、トランザクション内の処理は全て取り消されます。
+
 
 
 
